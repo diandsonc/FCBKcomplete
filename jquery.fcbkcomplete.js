@@ -8,6 +8,8 @@
 /**
  * width            - element width (by default 512px)
  * json_url         - url to fetch json object
+ * type             - Type GET or POST (GET by default)
+ * stringify        - Send content in String format (false by default),
  * cache            - use cache
  * height           - maximum number of element shown before scroll will apear
  * newel            - show typed text like a element
@@ -487,12 +489,29 @@
             var getBoxTimeoutValue = getBoxTimeout;
             setTimeout( function() {
               if (getBoxTimeoutValue != getBoxTimeout) return;
-              $.getJSON(options.json_url, {"tag": xssDisplay(etext)}, function(data) {
-                if (!isactive) return; // prevents opening the selection again after the focus is already off
-                addMembers(etext, data);
-                json_cache_object.set(etext, 1);
-                bindEvents();
-              });
+              
+                var jsonData;
+                if (options.stringify) {
+                    var fcbkData = [];
+                    fcbkData[0] = xssDisplay(etext);
+                    jsonData = JSON.stringify({ tag: fcbkData });
+                } else {
+                    jsonData = { "tag": xssDisplay(etext) };
+                }
+
+                $.ajax({
+                    url: options.json_url,
+                    type: options.type,
+                    dataType: "json",
+                    data: jsonData,
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+                        if (!isactive) return; // prevents opening the selection again after the focus is already off
+                        addMembers(etext, data);
+                        json_cache_object.set(etext, 1);
+                        bindEvents();
+                    }
+                });
             }, options.delay);
           }
         } else {
@@ -503,6 +522,8 @@
 
       var options = $.extend({
         json_url: null,
+        type: "GET",
+        stringify: false,
         width: 512,
         cache: false,
         height: "10",
